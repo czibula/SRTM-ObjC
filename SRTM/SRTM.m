@@ -70,7 +70,7 @@ static SRTM *sharedSingleton = nil;
         NSLog(@"ERROR: Cannot load elevation data from %@", hgtPath);
     }
     
-    NSLog(@"elevation: %f,%f -> %d", coordinate.latitude, coordinate.longitude, elevation);
+    //NSLog(@"elevation: %f,%f -> %d", coordinate.latitude, coordinate.longitude, elevation);
     
     return((CLLocationDistance)elevation);
 }
