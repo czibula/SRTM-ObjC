@@ -27,9 +27,27 @@ static SRTM *sharedSingleton = nil;
     return sharedSingleton;
 }
 
+const unsigned kMaxCol = 1201;
+const unsigned kMaxRow = 1201;
+
+- (uint16_t) elevationFrom:(FILE*)file X:(unsigned)x Y:(unsigned)y
+{
+    fseek(file, (kMaxCol*y)+x, SEEK_SET);
+
+    uint16_t data;
+    fread(&data, sizeof(uint16_t), 1, file);
+
+
+    data = CFSwapInt16BigToHost(data);
+    
+    uint16_t elevation;
+    memcpy(&elevation, &data, sizeof(int16_t));
+    
+    return elevation;
+}
+
 - (CLLocationDistance) elevationForCoordinate:(CLLocationCoordinate2D) coordinate
 {
-        
     CLLocationCoordinate2D lowerLeftCoordinate = CLLocationCoordinate2DMake(floor(coordinate.latitude), floor(coordinate.longitude));
     
     NSString *hgtName = [NSString stringWithFormat:@"%c%02d%c%03d.hgt",
@@ -45,25 +63,14 @@ static SRTM *sharedSingleton = nil;
     FILE *file = fopen([hgtPath UTF8String], "r");
     
     int16_t elevation = INT16_MIN; // standard for void
-    
-    const unsigned kMaxCol = 1201;
-    const unsigned kMaxRow = 1201;
-    
+
     if(file)
     {
         unsigned x = (unsigned)((coordinate.longitude - lowerLeftCoordinate.longitude)*(kMaxCol-1));
         unsigned y = (unsigned)((coordinate.latitude - lowerLeftCoordinate.latitude)*(kMaxRow-1));
-    
-        fseek(file, (kMaxCol*y)+x, SEEK_SET);
         
-        uint16_t data;
-        fread(&data, sizeof(uint16_t), 1, file);
-        
+        elevation = [self elevationFrom:file X:x Y:y];
         fclose(file);
-        
-        data = CFSwapInt16BigToHost(data);
-        
-        memcpy(&elevation, &data, sizeof(int16_t));
     }
     else
     {
@@ -74,6 +81,5 @@ static SRTM *sharedSingleton = nil;
     
     return((CLLocationDistance)elevation);
 }
-
 
 @end
