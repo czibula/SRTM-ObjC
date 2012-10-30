@@ -30,20 +30,18 @@ static SRTM *sharedSingleton = nil;
 const unsigned kMaxCol = 1201;
 const unsigned kMaxRow = 1201;
 
-- (uint16_t) elevationFrom:(FILE*)file X:(unsigned)x Y:(unsigned)y
+- (CLLocationDistance) elevationFrom:(FILE*)file X:(unsigned)x Y:(unsigned)y
 {
-    fseek(file, (kMaxCol*y)+x, SEEK_SET);
+    int16_t elevation = INT16_MIN; // standard for void
 
-    uint16_t data;
-    fread(&data, sizeof(uint16_t), 1, file);
+    long seek = sizeof(int16_t)*((kMaxCol*y)+x);    
+    fseek(file, seek, SEEK_SET);
 
+    fread(&elevation, sizeof(int16_t), 1, file);
 
-    data = CFSwapInt16BigToHost(data);
-    
-    uint16_t elevation;
-    memcpy(&elevation, &data, sizeof(int16_t));
-    
-    return elevation;
+    elevation = CFSwapInt16BigToHost(elevation);
+            
+    return (CLLocationDistance)elevation;
 }
 
 - (CLLocationDistance) elevationForCoordinate:(CLLocationCoordinate2D) coordinate
@@ -62,7 +60,7 @@ const unsigned kMaxRow = 1201;
                            
     FILE *file = fopen([hgtPath UTF8String], "r");
     
-    int16_t elevation = INT16_MIN; // standard for void
+    CLLocationDistance elevation;
 
     if(file)
     {
@@ -77,9 +75,9 @@ const unsigned kMaxRow = 1201;
         NSLog(@"ERROR: Cannot load elevation data from %@", hgtPath);
     }
     
-    //NSLog(@"elevation: %f,%f -> %d", coordinate.latitude, coordinate.longitude, elevation);
+    //NSLog(@"elevation: %f,%f -> %f", coordinate.latitude, coordinate.longitude, elevation);
     
-    return((CLLocationDistance)elevation);
+    return(elevation);
 }
 
 @end
